@@ -561,7 +561,7 @@ class DeftReducer(Reducer):
             if self.rank == cycle:
                 sz_bin = [0 for i in range(self.n_workers)]
                 alloc_bin = [[] for i in range(self.n_workers)]
-                sz_layer = [(self.end_layer[i] - self.st_layer[i]) * math.log2(k_layer[i]) if k_layer[i] > 0  else 0 for i in range(self.num_layer)]
+                sz_layer = [(self.end_layer[i] - self.st_layer[i]) * math.log2(k_layer[i]) if k_layer[i] > 1  else self.end_layer[i] - self.st_layer[i] for i in range(self.num_layer)]
                 for i in range(self.num_layer): 
                     val_max = max(sz_layer)
                     idx_max = sz_layer.index(max(sz_layer))
@@ -680,10 +680,10 @@ class DeftReducer(Reducer):
                     merged_k += k_layer[part]
                     ts_sz = self.end_layer[part] - self.st_layer[part]
                     merged_ts_sz += ts_sz
-                    if k_layer[part] > 0:
+                    if k_layer[part] > 1:
                         temp_log = math.log2(k_layer[part])
                     else:
-                        temp_log = 0
+                        temp_log = 1
                     comp_complexity += (ts_sz * temp_log)
                 print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", loc_k=" + str(merged_k) + ", grad=" + str(merged_ts_sz) + ", complexity=" + str(comp_complexity) + ", den=" + str(params_transmitted / sz_grad) + ", time_topk=" + str(time_topk) + ", time_comm=" + str(time_comm))
  
