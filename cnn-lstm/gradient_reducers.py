@@ -635,10 +635,6 @@ class DeftReducer(Reducer):
                     if k > 0:
                         indexes_temp.append(il[:k])
                 indexes_temp.append(torch.tensor(sum([list(range(self.st_layer[part], self.end_layer[part])) for part in common_part], []), dtype=indexes.dtype, device=indexes.device))
-                if common_part:
-                    for part in common_part:
-                        part_indexes = torch.arange(self.st_layer[part], self.end_layer[part], device=indexes.device)
-                        indexes_temp.append(part_indexes)
                 flat_indexes = list_to_tensor(indexes_temp)
                 values = flat_grad[flat_indexes.long()].contiguous()
                 h3 = torch.distributed.all_reduce(values, op=torch.distributed.ReduceOp.SUM, async_op=True)
