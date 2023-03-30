@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH -J stdio_sage
-#SBATCH -p cas_v100_4
-#SBATCH -N 4
-#SBATCH -n 16
+#SBATCH -p cas_v100nv_8
+#SBATCH -N 1
+#SBATCH -n 8
 #SBATCH -o %x.o%j
 #SBATCH -e %x.e%j
 #SBATCH --time 06:00:00
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:8
 #SBATCH --comment etc     # See Application SBATCH options name table's
 
 module purge
@@ -23,7 +23,7 @@ echo Node IP: $head_node_ip
 echo Port: $master_port
 export LOGLEVEL=INFO
 
-hostip=$head_node_ip port=$master_port mpirun -np 16 run.sh
+hostip=$head_node_ip port=$master_port mpirun -np 8 run.sh
 
 #hostip=$head_node_ip port=$master_port srun run.sh
 #srun torchrun --rdzv_id $RANDOM --rdzv_backend=distributed_backend --rdzv_endpoint=$head_node_ip:29500 --nnodes=2 --nproc_per_node=1 a.py

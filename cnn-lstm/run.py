@@ -102,7 +102,7 @@ elif args.task == 'wikitext2':
     train.config['task']= "LanguageModeling"
     train.config['optimizer_batch_size']= 32
     train.config['num_epochs'] = 90
-    train.config['optimizer_learning_rate']= 2.5
+    train.config['optimizer_learning_rate']= 10.0
     train.config['optimizer_conv_learning_rate']= train.config['optimizer_learning_rate']
     train.config['optimizer_decay_at_epochs']= [45, 80]#[60, 80]
     train.config['optimizer_decay_with_factor']= 0.1

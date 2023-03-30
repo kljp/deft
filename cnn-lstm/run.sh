@@ -14,7 +14,7 @@ export USE_WANDB=0 # Whether to use wandb or not
 ########################################## Tasks #########################################
 
 ##### ResNet18-CIFAR10 #######
- task='resnet18'
+# task='resnet18'
 ##############################
 
 ##### ResNet18-CIFAR100 #######
@@ -46,15 +46,15 @@ export USE_WANDB=0 # Whether to use wandb or not
 ##############################
 
 ###### LSTM-WikiText ###########
-# task='wikitext2'
+ task='wikitext2'
 ################################
 
 
 ########################################################################################
 
 #################################### Reducers ##########################################
-world_size=16
-nwpernode=4
+world_size=8
+nwpernode=8
 #########################
 
 
@@ -97,19 +97,19 @@ nwpernode=4
 ########### DEFT ############
  reducer='deft'
  if ((${RANK} == 0)); then rm -f ${DIST_INIT}; else sleep 15; fi
- python run.py --world_size=$world_size --task=$task --seed=1 --reducer=$reducer --comp_ratio=0.01 --rank=${RANK} --nwpernode=$nwpernode
+ python run.py --world_size=$world_size --task=$task --seed=1 --reducer=$reducer --comp_ratio=0.001 --rank=${RANK} --nwpernode=$nwpernode
 ###############################
 
 ########### Threshold ############ 
 # reducer='thresh'
 # if ((${RANK} == 0)); then rm -f ${DIST_INIT}; fi
-# python run.py --world_size=$world_size --task=$task --seed=1 --reducer=$reducer --thresh=0.00473 --rank=${RANK} --nwpernode=$nwpernode
+# python run.py --world_size=$world_size --task=$task --seed=1 --reducer=$reducer --thresh=0.002938 --rank=${RANK} --nwpernode=$nwpernode
 ##################################
 
 ########### SAGE ############ 
 # reducer='sage'
 # if ((${RANK} == 0)); then rm -f ${DIST_INIT}; fi
-# python run.py --world_size=$world_size --task=$task --seed=1 --reducer=$reducer --thresh=0.00473 --comp_ratio=0.001 --rank=${RANK} --nwpernode=$nwpernode
+# python run.py --world_size=$world_size --task=$task --seed=1 --reducer=$reducer --thresh=0.002938 --comp_ratio=0.001 --rank=${RANK} --nwpernode=$nwpernode
 ##################################
 
 ########### Top-k ############
