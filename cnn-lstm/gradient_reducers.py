@@ -488,7 +488,7 @@ class DeftReducer(Reducer):
                         val_max = 0
                         common_part.append(idx_max)
                     else:
-                    alloc_bin[bin_min].append(idx_max)
+                        alloc_bin[bin_min].append(idx_max)
                     sz_bin[bin_min] += val_max
                     sz_layer[idx_max] = -1
                 ts_idx = torch.tensor([len(bin) for bin in alloc_bin], dtype=torch.int32, device=self.device)
