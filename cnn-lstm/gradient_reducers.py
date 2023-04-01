@@ -484,16 +484,16 @@ class DeftReducer(Reducer):
                     val_max = max(sz_layer)
                     idx_max = sz_layer.index(max(sz_layer))
                     bin_min = sz_bin.index(min(sz_bin))
-#                    if k_layer[idx_max] == self.end_layer[idx_max] - self.st_layer[idx_max]:
-#                        val_max = 0
-#                        common_part.append(idx_max)
-#                    else:
+                    if k_layer[idx_max] == self.end_layer[idx_max] - self.st_layer[idx_max]:
+                        val_max = 0
+                        common_part.append(idx_max)
+                    else:
                     alloc_bin[bin_min].append(idx_max)
                     sz_bin[bin_min] += val_max
                     sz_layer[idx_max] = -1
                 ts_idx = torch.tensor([len(bin) for bin in alloc_bin], dtype=torch.int32, device=self.device)
                 ttl = [torch.tensor(bin, dtype=torch.int32, device=self.device) for bin in alloc_bin]
- #               ttl.append(torch.tensor(common_part, dtype=torch.int32, device=self.device))
+                ttl.append(torch.tensor(common_part, dtype=torch.int32, device=self.device))
                 ts_val = torch.cat(ttl)
             else:
                 ts_idx = torch.zeros(self.n_workers, dtype=torch.int32, device=self.device)
@@ -513,7 +513,7 @@ class DeftReducer(Reducer):
                             break
                         else:
                             acc_pos += int(ts_idx[i])
-#                    common_part = ts_val[int(torch.sum(ts_idx)):].tolist()
+                    common_part = ts_val[int(torch.sum(ts_idx)):].tolist()
             else:
                 alloc_part = alloc_bin[curr_part]
         time_topk_st = time.time()
@@ -552,7 +552,7 @@ class DeftReducer(Reducer):
                 for il, k in zip(index_list, ks):
                     if k > 0:
                         indexes_temp.append(il[:k])
-#                indexes_temp.append(torch.tensor(sum([list(range(self.st_layer[part], self.end_layer[part])) for part in common_part], []), dtype=indexes.dtype, device=indexes.device))
+                indexes_temp.append(torch.tensor(sum([list(range(self.st_layer[part], self.end_layer[part])) for part in common_part], []), dtype=indexes.dtype, device=indexes.device))
                 flat_indexes = list_to_tensor(indexes_temp)
                 values = flat_grad[flat_indexes.long()].contiguous()
                 h3 = torch.distributed.all_reduce(values, op=torch.distributed.ReduceOp.SUM, async_op=True)
