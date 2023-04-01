@@ -56,12 +56,9 @@ class TopKReducer(Reducer):
             sz_grad = len(flat_grad)
             k = int(self.compression * sz_grad)
 
-        time_topk_st = time.time()
         with self.timer("reduce.topk", verbosity=2):
             _, indexes = torch.topk(flat_grad.abs(), k, sorted=False)
-        time_topk = time.time() - time_topk_st
 
-        time_comm_st = time.time()
         with self.timer("reduce.gather", verbosity=2):
             if self.n_workers > 1:
                 index_list = [torch.empty_like(indexes) for i in range(self.n_workers)]
@@ -77,7 +74,6 @@ class TopKReducer(Reducer):
             else:
                 unq_indexes = indexes
                 values = flat_grad[unq_indexes.long()].contiguous()
-        time_comm = time.time() -time_comm_st
 
         with self.timer("reduce.combine", verbosity=2):
             grad_temp = torch.zeros_like(flat_grad)
@@ -100,7 +96,7 @@ class TopKReducer(Reducer):
                 st_idx += numel_m
             if self.iteration % 50 == 0:
                 norm_mem = torch.norm(mem_list)
-                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad) + ", time_topk=" + str(time_topk) + ", time_comm=" + str(time_comm))
+                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad))
            
         return bits_communicated, params_transmitted
 
@@ -201,12 +197,9 @@ class ThreshReducer(Reducer):
             flat_grad = list_to_tensor(grad_in)
             sz_grad = len(flat_grad)
 
-        time_topk_st = time.time()
         with self.timer("reduce.threshold", verbosity=2):
             indexes, = torch.where(flat_grad.abs()>=self.threshold)
-        time_topk = time.time() - time_topk_st
 
-        time_comm_st = time.time()
         with self.timer("reduce.gather", verbosity=2):
             if self.n_workers > 1:
                 local_k = torch.tensor(indexes.numel(), device=self.device)
@@ -234,7 +227,6 @@ class ThreshReducer(Reducer):
             else:
                 unq_indexes = indexes
                 values = flat_grad[unq_indexes.long()].contiguous()
-        time_comm = time.time() -time_comm_st
 
         with self.timer("reduce.combine", verbosity=2):
             grad_temp = torch.zeros_like(flat_grad)
@@ -257,7 +249,7 @@ class ThreshReducer(Reducer):
                 st_idx += numel_m
             if self.iteration % 50 == 0:
                 norm_mem = torch.norm(mem_list)
-                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad) + ", time_topk=" + str(time_topk) + ", time_comm=" + str(time_comm))
+                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad))
            
         return bits_communicated, params_transmitted
 
@@ -326,12 +318,9 @@ class SageReducer(Reducer):
                     samp_acc += abs(flat_grad[random.randrange(sz_grad)])
                 self.savg_curr = samp_acc / self.samp_sz
 
-        time_topk_st = time.time()
         with self.timer("reduce.threshold", verbosity=2):
             indexes, = torch.where(flat_grad.abs()>=self.threshold)
-        time_topk = time.time() - time_topk_st
 
-        time_comm_st = time.time()
         with self.timer("reduce.gather", verbosity=2):
             if self.n_workers > 1:
                 local_k = torch.tensor(indexes.numel(), device=self.device)
@@ -359,7 +348,6 @@ class SageReducer(Reducer):
             else:
                 unq_indexes = indexes
                 values = flat_grad[unq_indexes.long()].contiguous()
-        time_comm = time.time() -time_comm_st
 
         with self.timer("reduce.combine", verbosity=2):
             grad_temp = torch.zeros_like(flat_grad)
@@ -382,7 +370,7 @@ class SageReducer(Reducer):
                 st_idx += numel_m
             if self.iteration % 50 == 0:
                 norm_mem = torch.norm(mem_list)
-                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad) + ", time_topk=" + str(time_topk) + ", time_comm=" + str(time_comm))
+                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad))
 
         self.savg_prev = self.savg_curr
         self.density_average = (self.iteration * self.density_average + self.density_actual) / (self.iteration + 1)
@@ -450,27 +438,8 @@ class DeftReducer(Reducer):
                     k_layer[pri] = ts_sz
                 else:
                     k_layer[pri] = max(1, temp_k)
-               # layer pruning
-##                if float(k_layer[pri] / ts_sz) < self.compression:
-##                   k_layer[pri] = 0 # pruned
-##                else:
-##                    remain_k -= k_layer[pri]
                 remain_k -= k_layer[pri]
                 remain_norm -= norm_layer[pri]
-            if remain_k > 0:
-                for i in range(self.num_layer):
-                    if remain_k == 0:
-                        break
-                    pri = priority[i]
-                    ts_sz = self.end_layer[pri] - self.st_layer[pri]
-                    diff = ts_sz - k_layer[pri]
-                    if diff > 0:
-                        if diff > remain_k:
-                            k_layer[pri] += remain_k
-                            remain_k = 0
-                        else:
-                            k_layer[pri] += diff
-                            remain_k -= diff
             cycle = self.iteration % self.n_workers
             curr_part = (cycle + self.rank) % self.n_workers
             alloc_part = []
@@ -516,7 +485,7 @@ class DeftReducer(Reducer):
                     common_part = ts_val[int(torch.sum(ts_idx)):].tolist()
             else:
                 alloc_part = alloc_bin[curr_part]
-        time_topk_st = time.time()
+
         with self.timer("reduce.topk", verbosity=2):
             merged_k = 0
             if alloc_part:
@@ -529,9 +498,7 @@ class DeftReducer(Reducer):
                 indexes = torch.cat(merged_ts)
             if merged_k == 0:
                 _, empty_indexes = torch.topk(flat_grad[0:2].abs(), 1, sorted=False)
-        time_topk = time.time() - time_topk_st
 
-        time_comm_st = time.time()
         with self.timer("reduce.gather", verbosity=2):
             if self.n_workers > 1:
                 local_k = torch.tensor(merged_k, device=self.device)
@@ -562,7 +529,6 @@ class DeftReducer(Reducer):
             else:
                 flat_indexes = indexes
                 values = flat_grad[flat_indexes.long()].contiguous()
-        time_comm = time.time() - time_comm_st
 
         with self.timer("reduce.combine", verbosity=2):
             grad_temp = torch.zeros_like(flat_grad)
@@ -599,7 +565,7 @@ class DeftReducer(Reducer):
                     else:
                         temp_log = 1
                     comp_complexity += (ts_sz * temp_log)
-                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", loc_k=" + str(merged_k) + ", grad=" + str(merged_ts_sz) + ", complexity=" + str(comp_complexity) + ", den=" + str(params_transmitted / sz_grad) + ", time_topk=" + str(time_topk) + ", time_comm=" + str(time_comm))
+                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", loc_k=" + str(merged_k) + ", grad=" + str(merged_ts_sz) + ", complexity=" + str(comp_complexity) + ", den=" + str(params_transmitted / sz_grad))
  
         return bits_communicated, params_transmitted
 
@@ -622,12 +588,9 @@ class CLTKReducer(Reducer):
             sz_grad = len(flat_grad)
             k = int(self.compression * sz_grad)
 
-        time_topk_st = time.time()
         with self.timer("reduce.topk", verbosity=2):
             _, indexes = torch.topk(flat_grad.abs(), k, sorted=False)
-        time_topk = time.time() - time_topk_st
 
-        time_comm_st = time.time()
         with self.timer("reduce.gather", verbosity=2):
             if self.n_workers > 1:
                 h1 = torch.distributed.broadcast(indexes, src_rank, async_op=True)
@@ -639,7 +602,6 @@ class CLTKReducer(Reducer):
                 params_transmitted = values.numel()
             else:
                 values = flat_grad[indexes.long()].contiguous()
-        time_comm = time.time() - time_comm_st
 
         with self.timer("reduce.combine", verbosity=2):
             grad_temp = torch.zeros_like(flat_grad)
@@ -662,7 +624,7 @@ class CLTKReducer(Reducer):
                 st_idx += numel_m
             if self.iteration % 50 == 0:
                 norm_mem = torch.norm(mem_list)
-                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad) + ", time_topk=" + str(time_topk) + ", time_comm=" + str(time_comm))
+                print("[Iter " + str(self.iteration) + "] [Rank " + str(int(self.rank)) + "] err=" + str(norm_mem) + ", den=" + str(params_transmitted / sz_grad))
            
         return bits_communicated, params_transmitted
 
