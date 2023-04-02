@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J stdio_sage
+#SBATCH -J stdio_deft
 #SBATCH -p cas_v100_4
 #SBATCH -N 4
 #SBATCH -n 16
@@ -11,7 +11,7 @@
 
 module purge
 module load python/3.7.1
-source activate sage
+source activate deft
 
 nodes=( $( scontrol show hostnames $SLURM_JOB_NODELIST ) )
 nodes_array=($nodes)

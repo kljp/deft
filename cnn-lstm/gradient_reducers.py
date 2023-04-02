@@ -400,7 +400,7 @@ class DeftReducer(Reducer):
                 self.end_layer = []
                 alloc_pos = 0
                 self.num_layer = 0
-                for i, tensor in enumerate(grad_in):
+                for tensor in grad_in:
                     ts_sz = tensor.numel()
                     if ts_sz > thre_part:
                         a = int(ts_sz / self.n_workers)

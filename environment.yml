@@ -1,4 +1,4 @@
-name: sage
+name: deft
 
 channels:
   - pytorch
