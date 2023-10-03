@@ -56,14 +56,15 @@ $ hostip=<ip> port=<port> mpirun -np <world_size> run.sh
 
 ## Publication
 
-If you use this code, please cite the following [**\[Paper\]**](https://arxiv.org/abs/2307.03500):
+If you use this code, please cite the following [**\[Paper\]**](https://dl.acm.org/doi/abs/10.1145/3605573.3605609):
 - **DEFT: Exploiting Gradient Norm Difference between Model Layers for Scalable Gradient Sparsification**. Daegun Yoon, Sangyoon Oh. ***ICPP 2023***, Aug. 2023.
 
 ```
-@article{yoon2023deft,
+@inproceedings{yoon2023deft,
   title={DEFT: Exploiting Gradient Norm Difference between Model Layers for Scalable Gradient Sparsification},
   author={Yoon, Daegun and Oh, Sangyoon},
-  journal={arXiv preprint arXiv:2307.03500},
+  booktitle={Proceedings of the 52nd International Conference on Parallel Processing},
+  pages={746--755},
   year={2023}
 }
 ```
